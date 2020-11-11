@@ -6,6 +6,8 @@ Imports ErrorDialog
 
 Public Class Form1
 
+
+
   Private Sub CreateExceptionButton_Click(sender As Object, e As EventArgs) Handles CreateExceptionButton.Click
     Throw New Exception("A mild exception has occurred.")
   End Sub
@@ -14,15 +16,15 @@ Public Class Form1
     MethodOne()
   End Sub
 
-  Private Sub MethodOne()
+  Private Shared Sub MethodOne()
     MethodTwo()
   End Sub
 
-  Private Sub MethodTwo()
+  Private Shared Sub MethodTwo()
     MethodThree()
   End Sub
 
-  Private Sub MethodThree()
+  Private Shared Sub MethodThree()
     Throw New Exception("A stackable error has occurred.")
   End Sub
 
@@ -30,7 +32,7 @@ Public Class Form1
     InnerExOne()
   End Sub
 
-  Private Sub InnerExOne()
+  Private Shared Sub InnerExOne()
     Try
       InnerExTwo()
     Catch e As Exception
@@ -38,24 +40,24 @@ Public Class Form1
     End Try
   End Sub
 
-  Private Sub InnerExTwo()
+  Private Shared Sub InnerExTwo()
     Try
       InnerExThree()
     Catch ioe As InvalidOperationException
       Throw New Exception("An invalid operation occurred.", ioe)
     Catch e As Exception
-      Throw e
+      Throw ' e
     End Try
   End Sub
 
-  Private Sub InnerExThree()
+  Private Shared Sub InnerExThree()
     Try
       Dim z = 0
       Dim x = 3 \ z
     Catch dbze As DivideByZeroException
       Throw New InvalidOperationException("Can't divide by zero.", dbze)
     Catch e As Exception
-      Throw e
+      Throw ' e
     End Try
   End Sub
 
@@ -63,7 +65,7 @@ Public Class Form1
     CreateCustomException()
   End Sub
 
-  Private Sub CreateCustomException()
+  Private Shared Sub CreateCustomException()
     Throw New OurCustomException
   End Sub
 
@@ -71,22 +73,19 @@ Public Class Form1
     CallMethodWithNull(Nothing)
   End Sub
 
-  Private Sub CallMethodWithNull(anArg As String)
+  Private Shared Sub CallMethodWithNull(anArg As String)
     If anArg Is Nothing Then
-      Throw New ArgumentNullException("anArg was null.")
+      Throw New ArgumentNullException(NameOf(anArg), $"{NameOf(anArg)} was null.")
     End If
   End Sub
 
   Private Sub OpaqueExceptionDialogButton_Click(sender As Object, e As EventArgs) Handles OpaqueExceptionDialogButton.Click
-    Try
-      Throw New Exception("I don't like opaque dialogs!")
-    Catch ex As Exception
-      Using ef = New ErrorForm(ex) With {.Text = "Too bad - it's opaque!",
-                                         .Opacity = 0.78,
-                                         .AllowTransparency = True}
-        ef.ShowDialog(Me)
-      End Using
-    End Try
+    Using ef = New ErrorForm(New Exception("I don't like opaque dialogs!")) With {
+      .Text = "Too bad - it's opaque!",
+      .Opacity = 0.78,
+      .AllowTransparency = True}
+      ef.ShowDialog(Me)
+    End Using
   End Sub
 
 End Class
@@ -105,7 +104,7 @@ Public Class OurCustomException
   Public Sub New(message As String, innerEx As Exception)
     MyBase.New(message, innerEx)
     ThreadId = Threading.Thread.CurrentThread.ManagedThreadId
-    ProcessId = Process.GetCurrentProcess.Id
+    ProcessId = Environment.ProcessId
     AppDomainName = AppDomain.CurrentDomain.FriendlyName
   End Sub
 
